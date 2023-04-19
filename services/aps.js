@@ -48,3 +48,28 @@ service.getUserProfile = async (token) => {
     const resp = await new APS.UserProfileApi().getUserProfile(internalAuthClient, token);
     return resp.body;
 };
+
+service.getHubs = async (token) => {
+    const resp = await new APS.HubsApi().getHubs(null, internalAuthClient, token);
+    return resp.body.data;
+};
+
+service.getProjects = async (hubId, token) => {
+    const resp = await new APS.ProjectsApi().getHubProjects(hubId, null, internalAuthClient, token);
+    return resp.body.data;
+};
+
+service.getProjectContents = async (hubId, projectId, folderId, token) => {
+    if (!folderId) {
+        const resp = await new APS.ProjectsApi().getProjectTopFolders(hubId, projectId, internalAuthClient, token);
+        return resp.body.data;
+    } else {
+        const resp = await new APS.FoldersApi().getFolderContents(projectId, folderId, null, internalAuthClient, token);
+        return resp.body.data;
+    }
+};
+
+service.getItemVersions = async (projectId, itemId, token) => {
+    const resp = await new APS.ItemsApi().getItemVersions(projectId, itemId, null, internalAuthClient, token);
+    return resp.body.data;
+};
