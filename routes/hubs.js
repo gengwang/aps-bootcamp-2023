@@ -32,6 +32,16 @@ router.get('/api/hubs/:hub_id/projects/:project_id/contents', async function (re
     }
 });
 
+// This is added so that we can recursively get all the items under one project
+router.get('/api/hubs/:hub_id/projects/:project_id/folders/:folder_id/contents', async function (req, res, next) {
+    try {
+        const contents = await getProjectContents(req.params.hub_id, req.params.project_id, req.params.folder_id, req.internalOAuthToken);
+        res.json(contents);
+    } catch (err) {
+        next(err);
+    }
+});
+
 router.get('/api/hubs/:hub_id/projects/:project_id/contents/:item_id/versions', async function (req, res, next) {
     try {
         const versions = await getItemVersions(req.params.project_id, req.params.item_id, req.internalOAuthToken);
