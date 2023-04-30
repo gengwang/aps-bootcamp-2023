@@ -60,7 +60,7 @@ service.getProjects = async (hubId, token) => {
 };
 
 service.getProjectContents = async (hubId, projectId, folderId, token) => {
-    if (!folderId) {
+    if (folderId === undefined || folderId === 'undefined') { // template literals will convert undefined to 'undefined'
         const resp = await new APS.ProjectsApi().getProjectTopFolders(hubId, projectId, internalAuthClient, token);
         return resp.body.data;
     } else {
