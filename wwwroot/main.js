@@ -1,6 +1,6 @@
 import { initViewer, loadModel } from './viewer.js';
 import { initTree } from './sidebar.js';
-import {getAllItems} from './dashboard.js';
+import {getAllItems, lab} from './dashboard.js';
 
 const login = document.getElementById('login');
 try {
@@ -14,6 +14,9 @@ try {
 
         // Init views
         console.log("user is", user);
+        
+        // lab();
+
         const start = Date.now();
         console.log("hold on...");
         let allItems = await getAllItems();

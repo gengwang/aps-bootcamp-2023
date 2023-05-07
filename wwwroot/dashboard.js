@@ -48,6 +48,7 @@ async function getItemsInProjectsAsync(hubId, projectId, folderId) {
 async function* getItemsInProjectsRecursivelyAsync(hubId, projectId, folderId) {
   let newItems = await getItemsInProjectsAsync(hubId, projectId, folderId);
 
+  //TODO: Add "location" property which is a breadcrumb style path of the item or path
   // transform
   newItems = newItems.map((d) => ({
     parent: d.parent,
@@ -57,8 +58,11 @@ async function* getItemsInProjectsRecursivelyAsync(hubId, projectId, folderId) {
     folder: d.id, // a folder's folder is itself!
     type: d.type,
     label: d.attributes?.displayName,
-    lastModified: d.attributes?.lastModifiedTimeRollup,
+    extensionType: d.attributes?.extension?.type, // 'items:autodesk.bim360:File', 'items:autodesk.bim360:FDX', 'items:autodesk.bim360:C4RModel
+    sourceFileName: d.attributes?.extension?.data?.sourceFileName,
+    lastModified: d.attributes?.lastModifiedTime,
     lastModifiedBy: d.attributes?.lastModifiedUserName,
+    createTime: d.attributes?.createTime,
     url: d.links?.webView?.href,
     hidden: d.attributes?.hidden,
   }));
@@ -114,4 +118,20 @@ async function getAllAsync() {
   return stuff;
 }
 
-export { getAllAsync as getAllItems };
+async function lab() {
+  // trial account ADSK
+  const hubId = "b.5f045cf4-0872-47b6-96b7-a90d703b0735";
+  // Sample Project - Seaport Civic Center
+  // https://acc.autodesk.com/docs/files/projects/e362309c-30dc-400c-b1f0-a43c961f72c7
+  const projectId = "b.e362309c-30dc-400c-b1f0-a43c961f72c7";
+  // Project Files
+  const projectFilesFolderId = "urn:adsk.wipprod:fs.folder:co.IlCxBV4SQv6EoUFcjqd1sQ";
+  // Beta UX Testing
+  const uxTestingFolderId = "urn:adsk.wipprod:fs.folder:co.mTWdcyBUQz2OxLW-oIk7iw";
+  
+  const items = await getItemsInProjectsAsync(hubId, projectId, uxTestingFolderId);
+  console.log(">>", items);
+
+}
+
+export { getAllAsync as getAllItems, lab };
