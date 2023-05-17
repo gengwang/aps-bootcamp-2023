@@ -12,7 +12,29 @@ async function reduce(asyncIter, f, init) {
 const toArray = (iter) => reduce(iter, (a, x) => (a.push(x), a), []);
 
 //////////////////////////////////////////////////////
+/// "private" Methods
+async function _getHubsAsync() {
+  return await fetch("/api/hubs")
+    .then((res) => res.json())
+    .catch((err) => console.error(err));
+}
 
+async function _getProjectsInHubAsync(hubId) {
+  return await fetch(`/api/hubs/${hubId}/projects`)
+    .then((res) => res.json())
+    .catch((err) => console.error(err));
+}
+
+async function _getItemsInProjectsAsync(hubId, projectId, folderId) {
+  return await fetch(
+    `/api/hubs/${hubId}/projects/${projectId}/folders/${folderId}/contents`
+  )
+    .then((res) => res.json())
+    .catch((err) => console.error(err));
+  }
+
+//////////////////////////////////////////////////////
+ 
 async function getHubsAsync() {
   const hubs = await fetch("/api/hubs")
     .then((res) => res.json())
@@ -23,7 +45,7 @@ async function getHubsAsync() {
     const name = d.attributes?.name;
     const url = null;
     const newRoute = [{ id: id, name: name, url: url }];
-    return { ...d, parent: null, name: name, url: url, route: newRoute };
+    return { id: id, type: d.type, parent: null, name: name, url: url, route: newRoute, region: d.attributes?.region};
   });
 }
 
@@ -43,7 +65,8 @@ async function getProjectsInHubAsync(route) {
     const url = d.links?.webView?.href;
     const newRoute = [...route, {id: id, name: name, url: url}];
     return {
-      ...d,
+      id: id,
+      type: d.type,
       parent: hubId,
       name: name,
       url: url,
@@ -76,11 +99,18 @@ async function getItemsInProjectsAsync(route) {
     const parentId = !folderId ? projectId : folderId; // if it's a top folder or not
 
     return {
-      ...d,
+      id: id,
       parent: parentId,
       name: name,
       url: url,
+      type: d.type,
       route: newRoute,
+      extensionType: d.attributes?.extension?.type, // 'items:autodesk.bim360:File', 'items:autodesk.bim360:FDX', 'items:autodesk.bim360:C4RModel
+      sourceFileName: d.attributes?.extension?.data?.sourceFileName,
+      lastModified: d.attributes?.lastModifiedTime,
+      lastModifiedBy: d.attributes?.lastModifiedUserName,
+      createTime: d.attributes?.createTime,
+      hidden: d.attributes?.hidden,
     };
   });
 }
@@ -88,21 +118,6 @@ async function getItemsInProjectsAsync(route) {
 async function* getItemsInProjectsRecursivelyAsync(route) {
 
   let newItems = await getItemsInProjectsAsync(route);
-
-  newItems = newItems.map((d) => ({
-    parent: d.parent,
-    id: d.id,
-    name: d.name,
-    url: d.url,
-    type: d.type,
-    route: d.route,
-    extensionType: d.attributes?.extension?.type, // 'items:autodesk.bim360:File', 'items:autodesk.bim360:FDX', 'items:autodesk.bim360:C4RModel
-    sourceFileName: d.attributes?.extension?.data?.sourceFileName,
-    lastModified: d.attributes?.lastModifiedTime,
-    lastModifiedBy: d.attributes?.lastModifiedUserName,
-    createTime: d.attributes?.createTime,
-    hidden: d.attributes?.hidden,
-  }));
 
   for (const newItem of newItems) {
     if (newItem.type === "folders") {
@@ -117,15 +132,6 @@ async function* getItemsInProjectsRecursivelyAsync(route) {
 /* Get all the hubs, projects, folders and items under the user's ACC hubs */
 async function getAllAsync() {
   let hubs = await getHubsAsync();
-  hubs = hubs.map((d) => ({
-    id: d.id,
-    type: d.type,
-    parent: d.parent,
-    name: d.name,
-    url: d.url,
-    route: d.route,
-    region: d.attributes?.region,
-  }));
 
   // TODO: There are some interesting attributes such as "scopes",
   // "relationships>rootFolder" and "relationship>topFolders" that can be added
@@ -133,16 +139,7 @@ async function getAllAsync() {
     await hubs.map((hub) => getProjectsInHubAsync(hub.route))
   );
 
-  projects = _.flatten(projects).map((d) => {
-    return {
-      id: d.id,
-      type: d.type,
-      parent: d.parent,
-      name: d.name,
-      url: d.url,
-      route: d.route,
-    };
-  });
+  projects = _.flatten(projects);
 
   let foldersAndItems = await Promise.all(
     await projects.map((project) => {
@@ -156,6 +153,9 @@ async function getAllAsync() {
 }
 
 async function lab() {
+  // _getHubsAsync().then(d=>console.log('hubs:', d));
+  // return;
+
   getHubsAsync().then(d=>console.log('hubs:', d));
   // getProjectsInHubAsync({id:'a.YnVzaW5lc3M6YXV0b2Rlc2s2MTMy',  name: 'Forge Data'}).then(d => console.log('Forge Data:', d));
   // getProjectsInHubAsync({id:'b.5f045cf4-0872-47b6-96b7-a90d703b0735', name: 'Trial account geng.wang@autodesk.com'}).then(d => console.log('In trial account, projects:', d));

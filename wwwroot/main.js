@@ -22,7 +22,7 @@ try {
         let allItems = await getAllItems();
         const end = Date.now();
         console.log(`Execution time: ${end - start} ms`);
-        console.log("all your stuff:", allItems); // 161 items; 12831 ms
+        console.log("all your stuff:", allItems); // 161 items; BEFORE refactor 12831 ms; AFTER refactor: 9714 ms
 
     } else {
         login.innerText = 'Login';
